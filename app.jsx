@@ -277,6 +277,7 @@ function App() {
     setHistory([]);
     setFoundCities([]);
     setMessage('Drag letters in a straight line to connect each city.');
+    setRemainingCities(pool);
     previousCitiesRef.current = [];
     selectionRef.current = [];
     directionRef.current = null;
@@ -296,7 +297,10 @@ function App() {
   };
 
   const handlePointerDown = React.useCallback(
-    (cell) => {
+    (event, cell) => {
+      if (event && event.preventDefault) {
+        event.preventDefault();
+      }
       if (!isRunning || !activeTargets.length) {
         return;
       }
@@ -310,7 +314,10 @@ function App() {
   );
 
   const handlePointerEnter = React.useCallback(
-    (cell) => {
+    (event, cell) => {
+      if (event && event.preventDefault) {
+        event.preventDefault();
+      }
       if (!isSelecting || !isRunning) {
         return;
       }
@@ -423,12 +430,18 @@ function App() {
   }, [activeTargets, isSelecting, level.duration, level.points, prepareBoard, remainingCities.length, timeLeft]);
 
   React.useEffect(() => {
-    const handleMouseUp = () => finalizeSelection();
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchend', handleMouseUp);
+    const handlePointerUp = () => finalizeSelection();
+    if (window.PointerEvent) {
+      window.addEventListener('pointerup', handlePointerUp);
+      return () => {
+        window.removeEventListener('pointerup', handlePointerUp);
+      };
+    }
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchend', handlePointerUp);
     return () => {
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchend', handleMouseUp);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchend', handlePointerUp);
     };
   }, [finalizeSelection]);
 
@@ -514,16 +527,9 @@ function App() {
               <div
                 key={cell.id}
                 className={tileClass}
-                onMouseDown={() => handlePointerDown(cell)}
-                onMouseEnter={() => handlePointerEnter(cell)}
-                onTouchStart={(event) => {
-                  event.preventDefault();
-                  handlePointerDown(cell);
-                }}
-                onTouchMove={(event) => {
-                  event.preventDefault();
-                  handlePointerEnter(cell);
-                }}
+                onPointerDown={(event) => handlePointerDown(event, cell)}
+                onPointerEnter={(event) => handlePointerEnter(event, cell)}
+                onPointerMove={(event) => handlePointerEnter(event, cell)}
               >
                 {cell.letter}
               </div>
