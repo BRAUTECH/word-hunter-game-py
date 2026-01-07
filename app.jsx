@@ -184,6 +184,7 @@ function App() {
   const previousCitiesRef = React.useRef([]);
   const selectionRef = React.useRef([]);
   const directionRef = React.useRef(null);
+  const activePointerIdRef = React.useRef(null);
 
   const level = DIFFICULTY_LEVELS[difficulty];
 
@@ -309,15 +310,13 @@ function App() {
       selectionRef.current = startPath;
       directionRef.current = null;
       setSelection(startPath);
+      activePointerIdRef.current = event?.pointerId ?? 'mouse';
     },
     [activeTargets.length, isRunning]
   );
 
-  const handlePointerEnter = React.useCallback(
-    (event, cell) => {
-      if (event && event.preventDefault) {
-        event.preventDefault();
-      }
+  const extendSelection = React.useCallback(
+    (cell) => {
       if (!isSelecting || !isRunning) {
         return;
       }
@@ -364,6 +363,7 @@ function App() {
       return;
     }
     setIsSelecting(false);
+    activePointerIdRef.current = null;
     const path = selectionRef.current;
     selectionRef.current = [];
     directionRef.current = null;
@@ -429,6 +429,66 @@ function App() {
     }
   }, [activeTargets, isSelecting, level.duration, level.points, prepareBoard, remainingCities.length, timeLeft]);
 
+  const selectionIds = React.useMemo(
+    () => new Set(selection.map((cell) => cell.id)),
+    [selection]
+  );
+  const cellLookup = React.useMemo(() => {
+    const map = new Map();
+    boardCells.forEach((cell) => map.set(cell.id, cell));
+    return map;
+  }, [boardCells]);
+
+  React.useEffect(() => {
+    const handlePointerMove = (event) => {
+      if (!isSelecting) {
+        return;
+      }
+      if (
+        activePointerIdRef.current !== null &&
+        event.pointerId !== undefined &&
+        event.pointerId !== activePointerIdRef.current
+      ) {
+        return;
+      }
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+      const element = document.elementFromPoint(event.clientX, event.clientY);
+      if (!element) {
+        return;
+      }
+      const cellId = element.getAttribute('data-cell-id');
+      if (!cellId) {
+        return;
+      }
+      const cell = cellLookup.get(cellId);
+      if (cell) {
+        extendSelection(cell);
+      }
+    };
+
+    if (window.PointerEvent) {
+      window.addEventListener('pointermove', handlePointerMove, { passive: false });
+      return () => window.removeEventListener('pointermove', handlePointerMove);
+    }
+    const legacyMove = (event) => {
+      const touch = event.touches?.[0];
+      if (!touch) {
+        return;
+      }
+      handlePointerMove({
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        pointerId: activePointerIdRef.current,
+        cancelable: event.cancelable,
+        preventDefault: () => event.preventDefault()
+      });
+    };
+    window.addEventListener('touchmove', legacyMove, { passive: false });
+    return () => window.removeEventListener('touchmove', legacyMove);
+  }, [cellLookup, extendSelection, isSelecting]);
+
   React.useEffect(() => {
     const handlePointerUp = () => finalizeSelection();
     if (window.PointerEvent) {
@@ -449,10 +509,6 @@ function App() {
   const accuracy = attempts ? Math.round((foundCities.length / attempts) * 100) : 0;
   const progressPercent = Math.round(
     (foundCities.length / EUROPEAN_CITIES.length) * 100
-  );
-  const selectionIds = React.useMemo(
-    () => new Set(selection.map((cell) => cell.id)),
-    [selection]
   );
   const boardReady = boardCells.length > 0 && activeTargets.length > 0;
 
@@ -527,9 +583,8 @@ function App() {
               <div
                 key={cell.id}
                 className={tileClass}
+                data-cell-id={cell.id}
                 onPointerDown={(event) => handlePointerDown(event, cell)}
-                onPointerEnter={(event) => handlePointerEnter(event, cell)}
-                onPointerMove={(event) => handlePointerEnter(event, cell)}
               >
                 {cell.letter}
               </div>
