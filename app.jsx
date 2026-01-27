@@ -202,6 +202,7 @@ function App() {
   const [history, setHistory] = React.useState([]);
   const [score, setScore] = React.useState(0);
   const [timeLeft, setTimeLeft] = React.useState(DIFFICULTY_LEVELS.easy.duration);
+  const boardRef = React.useRef(null);
 
   const startNewGame = React.useCallback((levelKey) => {
     const { grid: nextGrid, words: nextWords } = buildGameBoard();
@@ -289,6 +290,22 @@ function App() {
     window.addEventListener('pointerup', finalizeSelection);
     return () => window.removeEventListener('pointerup', finalizeSelection);
   }, [finalizeSelection]);
+
+  React.useEffect(() => {
+    const handleGlobalPointerMove = (event) => {
+      if (!isSelecting) return;
+      const target = event.target.closest('.tile');
+      if (!target || !boardRef.current || !boardRef.current.contains(target)) {
+        return;
+      }
+      const row = Number(target.dataset.row);
+      const col = Number(target.dataset.col);
+      appendCellToSelection(row, col);
+    };
+
+    window.addEventListener('pointermove', handleGlobalPointerMove);
+    return () => window.removeEventListener('pointermove', handleGlobalPointerMove);
+  }, [isSelecting, appendCellToSelection]);
 
   const handlePointerDown = (row, col) => (event) => {
     event.preventDefault();
@@ -406,7 +423,7 @@ function App() {
         </div>
 
         {grid.length ? (
-          <div className="board-grid">
+          <div className="board-grid" ref={boardRef}>
             {grid.map((row, rowIndex) =>
               row.map((letter, colIndex) => {
                 const key = cellKey(rowIndex, colIndex);
@@ -426,6 +443,8 @@ function App() {
                   <div
                     key={key}
                     className={tileClass.join(' ')}
+                    data-row={rowIndex}
+                    data-col={colIndex}
                     onPointerDown={handlePointerDown(rowIndex, colIndex)}
                     onPointerEnter={handlePointerEnter(rowIndex, colIndex)}
                     onPointerMove={handlePointerMove(rowIndex, colIndex)}
@@ -488,4 +507,3 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-
