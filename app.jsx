@@ -297,9 +297,7 @@ function App() {
     setSelection([{ row, col }]);
   };
 
-  const handlePointerEnter = (row, col) => (event) => {
-    if (!isSelecting) return;
-    event.preventDefault();
+  const appendCellToSelection = React.useCallback((row, col) => {
     setSelection((prev) => {
       const exists = prev.some((cell) => cell.row === row && cell.col === col);
       if (exists) return prev;
@@ -321,6 +319,18 @@ function App() {
       }
       return prev;
     });
+  }, []);
+
+  const handlePointerEnter = (row, col) => (event) => {
+    if (!isSelecting) return;
+    event.preventDefault();
+    appendCellToSelection(row, col);
+  };
+
+  const handlePointerMove = (row, col) => (event) => {
+    if (!isSelecting) return;
+    event.preventDefault();
+    appendCellToSelection(row, col);
   };
 
   const handleDifficultyChange = (event) => {
@@ -356,6 +366,7 @@ function App() {
       <header>
         <h1>Euro Word Hunter</h1>
         <p>Find the hidden European cities before the timer runs out.</p>
+        <p>Developed by Fabio Ribeiro - ITA - 2026</p>
       </header>
 
       <section className="status-bar">
@@ -417,6 +428,7 @@ function App() {
                     className={tileClass.join(' ')}
                     onPointerDown={handlePointerDown(rowIndex, colIndex)}
                     onPointerEnter={handlePointerEnter(rowIndex, colIndex)}
+                    onPointerMove={handlePointerMove(rowIndex, colIndex)}
                     style={tileStyle}
                   >
                     {letter}
@@ -476,3 +488,4 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
