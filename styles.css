@@ -279,6 +279,20 @@ header p {
   color: var(--danger);
 }
 
+@media (max-width: 768px) {
+  .board-grid {
+    width: 100%;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    padding-bottom: 8px;
+  }
+  .tile {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    font-size: clamp(0.75rem, 3vw, 1rem);
+  }
+}
+
 @media (max-width: 900px) {
   :root {
     --tile-size: clamp(30px, 8vw, 46px);
@@ -323,5 +337,6 @@ header p {
     flex: 1 1 100%;
   }
 }
+
 
 
