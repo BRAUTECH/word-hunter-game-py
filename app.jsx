@@ -293,13 +293,15 @@ function App() {
 
   React.useEffect(() => {
     const handleGlobalPointerMove = (event) => {
-      if (!isSelecting) return;
-      const target = event.target.closest('.tile');
-      if (!target || !boardRef.current || !boardRef.current.contains(target)) {
+      if (!isSelecting || !boardRef.current) return;
+      const element = document.elementFromPoint(event.clientX, event.clientY);
+      if (!element) return;
+      const tile = element.closest('.tile');
+      if (!tile || !boardRef.current.contains(tile)) {
         return;
       }
-      const row = Number(target.dataset.row);
-      const col = Number(target.dataset.col);
+      const row = Number(tile.dataset.row);
+      const col = Number(tile.dataset.col);
       appendCellToSelection(row, col);
     };
 
