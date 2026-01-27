@@ -167,9 +167,10 @@ header p {
   padding: 18px;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
   overflow-x: auto;
+  gap: 12px;
+  padding-bottom: 4px;
 }
 
 .word-placeholder {
@@ -185,10 +186,11 @@ header p {
   flex-direction: column;
   background: #f8fbff;
   min-width: 110px;
-  max-width: 180px;
+  max-width: 160px;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+  flex: 0 0 auto;
 }
 
 .word-chip.complete {
@@ -274,6 +276,34 @@ header p {
   color: var(--danger);
 }
 
+/* --- Responsive fixes for mobile layout issues --- */
+
+/* Make word chips not wrap and scroll horizontally on small screens */
+.word-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.word-chip {
+  min-width: 110px;
+  max-width: 160px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+/* Make the board grid shrink columns and allow horizontal scroll on very small screens */
+.board-grid {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+
 @media (max-width: 900px) {
   .board-grid {
     grid-template-columns: repeat(8, 1fr);
@@ -296,12 +326,34 @@ header p {
   }
 }
 
+@media (max-width: 480px) {
+  .board-grid {
+    grid-template-columns: repeat(4, minmax(40px, 1fr));
+    min-width: 320px;
+  }
+  .tile {
+    height: 36px;
+    font-size: 0.9rem;
+  }
+}
+
 @media (max-width: 400px) {
   .board-grid {
     grid-template-columns: repeat(4, 1fr);
   }
   .tile {
     height: 24px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .board-grid {
+    grid-template-columns: repeat(3, minmax(40px, 1fr));
+    min-width: 240px;
+  }
+  .tile {
+    height: 28px;
     font-size: 0.8rem;
   }
 }
